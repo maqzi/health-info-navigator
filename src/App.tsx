@@ -1,18 +1,25 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation, useNavigationType } from "react-router-dom";
-import { Provider, useSelector } from "react-redux";
-import { useEffect } from "react";
-import { Snackbar } from "@mui/material";
-import { toast } from "sonner";
-import store, { RootState } from "@/store/store";
-import datadog from "@/lib/datadog";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import RulesDesignerPage from "./pages/RulesDesignerPage";
-import WorkbenchPage from "./pages/WorkbenchPage";
-import WelcomePage from "./pages/WelcomePage";
-import DemoSignupPage from "./pages/DemoSignupPage";
-import PrivateRoute from "./components/PrivateRoute";
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import { Provider, useSelector } from 'react-redux';
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  useLocation,
+  useNavigationType,
+} from 'react-router-dom';
+
+import datadog from '@/lib/datadog';
+import store, { RootState } from '@/store/store';
+
+import AppLayout from './components/AppLayout';
+import PrivateRoute from './components/PrivateRoute';
+import DemoSignupPage from './pages/DemoSignupPage';
+import NotFound from './pages/NotFound';
+import RulesDesignerPage from './pages/RulesDesignerPage';
+import WelcomePage from './pages/WelcomePage';
+import WhiteboardPage from './pages/WhiteboardPage';
+import WorkbenchPage from './pages/WorkbenchPage';
 
 const queryClient = new QueryClient();
 
@@ -29,7 +36,7 @@ const RouteChangeTracker = () => {
       navigationType,
       search: location.search,
       timestamp: new Date().toISOString(),
-      screenResolution: `${window.innerWidth}x${window.innerHeight}`
+      screenResolution: `${window.innerWidth}x${window.innerHeight}`,
     });
   }, [location, navigationType]);
 
@@ -45,18 +52,10 @@ const AppContent = () => {
     if (userInfo?.email) {
       datadog.setUser({
         email: userInfo.email,
-        name: userInfo.name
+        name: userInfo.name,
       });
     }
   }, [userInfo, step]);
-
-  const handleStepChange = (newStep: number) => {
-    // This function can be passed to child components that need it
-  };
-
-  const handleLogout = () => {
-    // Handle logout logic
-  };
 
   return (
     <div>
@@ -64,38 +63,69 @@ const AppContent = () => {
       <Routes>
         <Route path="/" element={<DemoSignupPage />} />
         <Route path="/signup" element={<DemoSignupPage />} />
-        <Route
-          path="/index"
-          element={
-            <PrivateRoute step={0}>
-              <Index />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/rules-designer"
-          element={
-            <PrivateRoute step={1}>
-              <RulesDesignerPage handleStepChange={handleStepChange} />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/workbench"
-          element={
-            <PrivateRoute step={2}>
-              <WorkbenchPage />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/welcome"
-          element={
-            <PrivateRoute step={0}>
-              <WelcomePage userInfo={userInfo} handleLogout={handleLogout} />
-            </PrivateRoute>
-          }
-        />
+
+        {/* Routes that use the AppLayout wrapper */}
+        <Route element={<AppLayout />}>
+          <Route
+            path="/welcome"
+            element={
+              <PrivateRoute step={0}>
+                <WelcomePage userInfo={userInfo} />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={
+              <PrivateRoute step={0}>
+                <WelcomePage userInfo={userInfo} />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/rules-designer"
+            element={
+              <PrivateRoute step={1}>
+                <RulesDesignerPage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/workbench"
+            element={
+              <PrivateRoute step={2}>
+                <WorkbenchPage />
+              </PrivateRoute>
+            }
+          />
+          {/* Whiteboard routes - version-specific only */}
+          <Route
+            path="/rules/:ruleId/version/:versionId/whiteboard"
+            element={
+              <PrivateRoute step={1}>
+                <WhiteboardPage />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/rules/new/whiteboard"
+            element={
+              <PrivateRoute step={1}>
+                <WhiteboardPage />
+              </PrivateRoute>
+            }
+          />
+          {/* Legacy route - redirect to welcome */}
+          <Route
+            path="/index"
+            element={
+              <PrivateRoute step={0}>
+                <WelcomePage userInfo={userInfo} />
+              </PrivateRoute>
+            }
+          />
+        </Route>
+
         <Route path="*" element={<NotFound />} />
       </Routes>
     </div>
